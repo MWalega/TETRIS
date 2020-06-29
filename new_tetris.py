@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import random
 from copy import deepcopy
+import time
 
 # BOARD
 
@@ -214,7 +215,7 @@ def print_board(board, ls: LiveShape):
         else:
           print(' _ ', end = '') 
 
-def move_shape(ls: LiveShape, input_move = 's') -> LiveShape:
+def move_shape(ls: LiveShape, input_move) -> LiveShape:
   old_ls = deepcopy(ls)
   delta_pos = {
    's' : pos(1, 0), 
@@ -231,13 +232,13 @@ def move_shape(ls: LiveShape, input_move = 's') -> LiveShape:
   return old_ls
 
 def rotate_shape(ls: LiveShape) -> LiveShape:
-  ls.shape_rot = (ls.shape_rot + 1)%(len(shapes[ls.shape_ind]))
+  ls.shape_rot = (ls.shape_rot + 1) % len(shapes[ls.shape_ind])
 
 def change_pos(ls: LiveShape, delta: pos):
   ls.current_pos.row += delta.row
   ls.current_pos.col += delta.col
 
-def check_if_collide(ls: LiveShape, board) -> bool:
+def collision(ls: LiveShape, board) -> bool:
   for srow in range(5):
     for scol in range(5):
       if (
@@ -257,56 +258,62 @@ def add_shape_to_board(ls: LiveShape, board):
 def remove_full_rows(board):
   len_row_no_border = len(board[0][2:-2])
   
-  for i in range(5, len(board[:-2])):
+  for row in range(5, len(board[:-2])):
     count = 0
-    for j in range(2, len(board[i][:-2])):
-      if board[i][j] == 1:
+    for col in range(2, len(board[row][:-2])):
+      if board[row][col] == 1:
         count += 1
     if count == len_row_no_border:
-      remove_row_and_adapt_board(board, i)
-      remove_full_rows(board)
+      remove_row_and_adapt_board(board, row)
 
-def remove_row_and_adapt_board(board, i: int):
-  # cleaning full i-row
-  for j in range(2, len(board[0][:-2])):
-    board[i][j] = 0
+def remove_row_and_adapt_board(board, row: int):
+  # cleaning full row
+  for col in range(2, len(board[0][:-2])):
+    board[row][col] = 0
 
-  # pulling down all 1's above i-row by 1
-  for x in range(i, 5, -1):
-    for y in range(2, len(board[0][:-2])):
-      if board[x][y] == 1:
-        board[x][y] = 0
-        board[x+1][y] = 1
+  # pulling down all 1's above empty row by 1
+  for srow in range(row, 4, -1):
+    for scol in range(2, len(board[0][:-2])):
+      if board[srow][scol] == 1:
+        board[srow][scol] = 0
+        board[srow+1][scol] = 1
 
-def check_if_game_over(board) -> bool:
-  for i in range(5):
-    for j in range(len(board[i])):
-      if board[i][j] == 1:
+def game_not_over(board) -> bool:
+  for row in range(5):
+    for col in range(len(board[row])):
+      if board[row][col] == 1:
         return False
   return True
 
+def moves() -> list:
+  moves_lst = []
+
+  start = time.time()
+  while (start - time.time()) < 2:
+    input_move = input('w-rotate, a-left, d-right, None-nothing')
+    while input_move not in ['w','a','d','']:
+      input_move = input('w-rotate, a-left, d-right, None-nothing')
+    moves_lst.append(input_move)
+
+  return moves_lst
+  
 def tetris(board, shapes):
-  is_running = True
-  is_moving = False
   ls = pick_new_random_shape()
 
-  while is_running:
+  while game_not_over(board):
     print_board(board, ls)
     input_move = input('w-rotate, a-left, d-right, None-nothing')
     while input_move not in ['w','a','d','']:
       input_move = input('w-rotate, a-left, d-right, None-nothing')
     old_ls = move_shape(ls, input_move)
-    collision = check_if_collide(ls, board)
-    if collision:
+    if collision(ls, board):
       ls = old_ls
-    old_ls = move_shape(ls)
-    collision = check_if_collide(ls, board)
-    if collision:
+    old_ls = move_shape(ls, 's')
+    if collision(ls, board):
       ls = old_ls
       add_shape_to_board(ls, board)
       remove_full_rows(board)
       ls = pick_new_random_shape()
-      is_running = check_if_game_over(board)
   return 'Game over'
 
 tetris(board, shapes)
