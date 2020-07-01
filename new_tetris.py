@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import random
 from copy import deepcopy
 import time
-#test
 
 # BOARD
 
@@ -216,8 +215,8 @@ def print_board(board, ls: LiveShape):
         else:
           print(' _ ', end = '') 
 
-def move_shape(ls: LiveShape, input_move) -> LiveShape:
-  old_ls = deepcopy(ls)
+def move_shape(ls: LiveShape, move) -> LiveShape:
+  new_ls = deepcopy(ls)
   delta_pos = {
    's' : pos(1, 0), 
    'a' : pos(0, -1),
@@ -225,14 +224,15 @@ def move_shape(ls: LiveShape, input_move) -> LiveShape:
    '' : pos(0, 0),
   }
 
-  if input_move == 'w':
-    rotate_shape(ls)
+  if move == 'w':
+    rotate_shape(new_ls)
   else:
-    change_pos(ls, delta_pos[input_move])
+    change_pos(new_ls, delta_pos[move])
 
-  return old_ls
+  return new_ls
 
 def rotate_shape(ls: LiveShape) -> LiveShape:
+  
   ls.shape_rot = (ls.shape_rot + 1) % len(shapes[ls.shape_ind])
 
 def change_pos(ls: LiveShape, delta: pos):
@@ -286,32 +286,26 @@ def game_not_over(board) -> bool:
         return False
   return True
 
-def moves() -> list:
-  moves_lst = []
+def input_move() -> str:
+  move = input('w-rotate, a-left, d-right, None-nothing')
+  while move not in ['w','a','d','']:
+    move = input('w-rotate, a-left, d-right, None-nothing')
 
-  start = time.time()
-  while (start - time.time()) < 2:
-    input_move = input('w-rotate, a-left, d-right, None-nothing')
-    while input_move not in ['w','a','d','']:
-      input_move = input('w-rotate, a-left, d-right, None-nothing')
-    moves_lst.append(input_move)
+  return move
 
-  return moves_lst
-  
 def tetris(board, shapes):
   ls = pick_new_random_shape()
 
   while game_not_over(board):
     print_board(board, ls)
-    input_move = input('w-rotate, a-left, d-right, None-nothing')
-    while input_move not in ['w','a','d','']:
-      input_move = input('w-rotate, a-left, d-right, None-nothing')
-    old_ls = move_shape(ls, input_move)
-    if collision(ls, board):
-      ls = old_ls
-    old_ls = move_shape(ls, 's')
-    if collision(ls, board):
-      ls = old_ls
+    move = input_move()
+    new_ls = move_shape(ls, move)
+    if not collision(new_ls, board):
+      ls = new_ls
+    new_ls = move_shape(ls, 's')
+    if not collision(new_ls, board):
+      ls = new_ls
+    else:
       add_shape_to_board(ls, board)
       remove_full_rows(board)
       ls = pick_new_random_shape()
