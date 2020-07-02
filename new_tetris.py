@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import random
 from copy import deepcopy
 import time
+import readchar
 
 # BOARD
 
@@ -287,21 +288,30 @@ def game_not_over(board) -> bool:
   return True
 
 def input_move() -> str:
-  move = input('w-rotate, a-left, d-right, None-nothing')
-  while move not in ['w','a','d','']:
-    move = input('w-rotate, a-left, d-right, None-nothing')
-
+  # w - rotate
+  # a - left
+  # d - right
+  move = readchar.readchar()
+  while move not in ['w','a','d']:
+    return ''
   return move
+
+def try_moves(ls: LiveShape, board) -> LiveShape:
+  start = time.time()
+  while (time.time() - start) < 0.5:
+    move = input_move()
+    new_ls = move_shape(ls, move)
+    if not collision(new_ls, board):
+      ls = new_ls
+    print_board(board, ls)
+  return ls
 
 def tetris(board, shapes):
   ls = pick_new_random_shape()
 
   while game_not_over(board):
     print_board(board, ls)
-    move = input_move()
-    new_ls = move_shape(ls, move)
-    if not collision(new_ls, board):
-      ls = new_ls
+    ls = try_moves(ls, board)
     new_ls = move_shape(ls, 's')
     if not collision(new_ls, board):
       ls = new_ls
